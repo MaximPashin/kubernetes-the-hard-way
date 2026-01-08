@@ -1,10 +1,14 @@
 resource "null_resource" "jumpbox_setup" {
-  depends_on = [yandex_compute_instance.jump_node]
+    depends_on = [
+        yandex_compute_instance.jump_node,
+        yandex_compute_instance.server_node,
+        yandex_compute_instance.worker_nodes,
+    ]
 
-  triggers = {
-    # Перезапускать при изменении IP адреса jump host
-    jump_host_ip = yandex_compute_instance.jump_node.network_interface[0].nat_ip_address
-  }
+    triggers = {
+        # Перезапускать при изменении IP адреса jump host
+        jump_host_ip = yandex_compute_instance.jump_node.network_interface[0].nat_ip_address
+    }
 
     connection {
         type        = "ssh"
@@ -105,12 +109,25 @@ resource "null_resource" "jumpbox_setup" {
         "echo '=== Настройка kubectl ==='",
         "export PATH=/opt/kubernetes/downloads/client:/opt/kubernetes/downloads/controller:/opt/kubernetes/downloads/worker:$PATH",
         "echo '=== Настройка kubectl завершена ==='",
+        <<-EOT
+        echo '${local.server_config.ipv4_address} ${local.server_config.fqdn} ${local.server_config.hostname}' | sudo tee -a /etc/cloud/templates/hosts.debian.tmpl
+        %{ for i in range(var.vm_count) }
+        echo '${local.workers_configs[i].ipv4_address} ${local.workers_configs[i].fqdn} ${local.workers_configs[i].hostname}' | sudo tee -a /etc/cloud/templates/hosts.debian.tmpl
+        %{ endfor ~}
+        sudo systemctl restart cloud-init
+        echo '=== Конфигурирование hosts завершена ==='
+        sudo cat /etc/hosts
+        EOT
         ]
     }
 }
 
 resource "null_resource" "server_setup" {
-    depends_on = [yandex_compute_instance.server_node]
+    depends_on = [
+        yandex_compute_instance.jump_node,
+        yandex_compute_instance.server_node,
+        yandex_compute_instance.worker_nodes,
+    ]
 
     triggers = {
         # Перезапускать при изменении IP адреса jump host
@@ -131,11 +148,20 @@ resource "null_resource" "server_setup" {
     provisioner "remote-exec" {
         inline = [
             "echo '=== Начало конфигурирования hostname ==='",
-            "sudo sed -i 's/^127.0.1.1.*/127.0.1.1\t${local.server_config.fqdn} ${local.server_config.hostname}/' /etc/hosts",
+            "sudo sed -i 's/^127.0.1.1.*/127.0.1.1\t${local.server_config.fqdn} ${local.server_config.hostname}/' /etc/cloud/templates/hosts.debian.tmpl",
             "sudo hostnamectl set-hostname ${local.server_config.hostname}",
             "sudo systemctl restart systemd-hostnamed",
             "echo '=== Конфигурирование hostname завершено ==='",
-            "echo $(hostname --fqdn)"
+            "echo $(hostname --fqdn)",
+            <<-EOT
+            echo '${local.server_config.ipv4_address} ${local.server_config.fqdn} ${local.server_config.hostname}' | sudo tee -a /etc/cloud/templates/hosts.debian.tmpl
+            %{ for i in range(var.vm_count) }
+            echo '${local.workers_configs[i].ipv4_address} ${local.workers_configs[i].fqdn} ${local.workers_configs[i].hostname}' | sudo tee -a /etc/cloud/templates/hosts.debian.tmpl
+            %{ endfor ~}
+            sudo systemctl restart cloud-init
+            echo '=== Конфигурирование hosts завершена ==='
+            sudo cat /etc/hosts
+            EOT
         ]
     }
 }
@@ -148,7 +174,11 @@ resource "null_resource" "workers_setup" {
         server_host_ip = each.value.network_interface[0].ip_address
     }
 
-    depends_on = [yandex_compute_instance.worker_nodes]
+    depends_on = [
+        yandex_compute_instance.jump_node,
+        yandex_compute_instance.server_node,
+        yandex_compute_instance.worker_nodes,
+    ]
 
     connection {
         type        = "ssh"
@@ -164,11 +194,20 @@ resource "null_resource" "workers_setup" {
     provisioner "remote-exec" {
         inline = [
             "echo '=== Начало конфигурирования hostname ==='",
-            "sudo sed -i 's/^127.0.1.1.*/127.0.1.1\t${local.workers_configs[each.key].fqdn} ${local.workers_configs[each.key].hostname}/' /etc/hosts",
+            "sudo sed -i 's/^127.0.1.1.*/127.0.1.1\t${local.workers_configs[each.key].fqdn} ${local.workers_configs[each.key].hostname}/' /etc/cloud/templates/hosts.debian.tmpl",
             "sudo hostnamectl set-hostname ${local.workers_configs[each.key].hostname}",
             "sudo systemctl restart systemd-hostnamed",
             "echo '=== Конфигурирование hostname завершено ==='",
-            "echo $(hostname --fqdn)"
+            "echo $(hostname --fqdn)",
+            <<-EOT
+            echo '${local.server_config.ipv4_address} ${local.server_config.fqdn} ${local.server_config.hostname}' | sudo tee -a /etc/cloud/templates/hosts.debian.tmpl
+            %{ for i in range(var.vm_count) }
+            echo '${local.workers_configs[i].ipv4_address} ${local.workers_configs[i].fqdn} ${local.workers_configs[i].hostname}' | sudo tee -a /etc/cloud/templates/hosts.debian.tmpl
+            %{ endfor ~}
+            sudo systemctl restart cloud-init
+            echo '=== Конфигурирование hosts завершена ==='
+            sudo cat /etc/hosts
+            EOT
         ]
     }
 }
