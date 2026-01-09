@@ -94,7 +94,7 @@ resource "yandex_compute_instance" "jump_node" {
         user-data = <<-EOF
         #cloud-config
         users:
-            - name: max
+            - name: admin
               groups: sudo
               shell: /bin/bash
               sudo: ['ALL=(ALL) NOPASSWD:ALL']
@@ -146,7 +146,7 @@ resource "yandex_compute_instance" "server_node" {
         user-data = <<-EOF
         #cloud-config
         users:
-            - name: max
+            - name: admin
               groups: sudo
               shell: /bin/bash
               sudo: ['ALL=(ALL) NOPASSWD:ALL']
@@ -188,7 +188,7 @@ resource "yandex_compute_instance" "worker_nodes" {
         user-data = <<-EOF
         #cloud-config
         users:
-            - name: max
+            - name: admin
               groups: sudo
               shell: /bin/bash
               sudo: ['ALL=(ALL) NOPASSWD:ALL']

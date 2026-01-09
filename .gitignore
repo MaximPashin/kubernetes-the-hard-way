@@ -5,6 +5,10 @@
 # Local .terraform directories
 **/.terraform/*
 
+**/certs/*
+**/downloads/*
+**/kubeconfigs/*
+
 # .tfstate files
 *.tfstate
 *.tfstate.*

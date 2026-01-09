@@ -23,10 +23,10 @@ resource "tls_self_signed_cert" "ca" {
 # Функция для создания сертификатов
 locals {
   nodes_certs = { for i in range(var.vm_count) :
-    "node-${i}" => {
-      cn = "system:node:node-${i}"
+    "node-${i+1}" => {
+      cn = "system:node:node-${i+1}"
       organization = "system:nodes"
-      dns_names = ["node-${i}"]
+      dns_names = ["node-${i+1}"]
       ip_addresses = ["127.0.0.1"]
       allowed_uses = ["client_auth", "server_auth"]
     }
@@ -183,17 +183,17 @@ resource "null_resource" "copy_certs_nodes" {
   triggers = {
     certs_hash = md5(join("", [
       tls_self_signed_cert.ca.cert_pem,
-      tls_private_key.certs["node-${each.key}"].private_key_pem,
+      tls_private_key.certs["node-${each.key + 1}"].private_key_pem,
     ]))
   }
 
   connection {
     type        = "ssh"
-    user        = "max"
+    user        = "admin"
     private_key = file(var.ssh_private_key)
     host        = each.value.network_interface[0].ip_address
     bastion_host        = yandex_compute_instance.jump_node.network_interface[0].nat_ip_address
-    bastion_user        = "max"
+    bastion_user        = "admin"
     bastion_private_key = file(var.ssh_private_key)
   }
 
@@ -211,12 +211,12 @@ resource "null_resource" "copy_certs_nodes" {
   }
 
   provisioner "file" {
-    source = "${path.module}/certs/node-${each.key}.key"
+    source = "${path.module}/certs/node-${each.key+1}.key"
     destination = "/tmp/kubelet.key"
   }
 
   provisioner "file" {
-    source = "${path.module}/certs/node-${each.key}.crt"
+    source = "${path.module}/certs/node-${each.key+1}.crt"
     destination = "/tmp/kubelet.crt"
   }
 
@@ -251,11 +251,11 @@ resource "null_resource" "copy_certs_server" {
 
   connection {
     type        = "ssh"
-    user        = "max"
+    user        = "admin"
     private_key = file(var.ssh_private_key)
     host        = yandex_compute_instance.server_node.network_interface[0].ip_address
     bastion_host        = yandex_compute_instance.jump_node.network_interface[0].nat_ip_address
-    bastion_user        = "max"
+    bastion_user        = "admin"
     bastion_private_key = file(var.ssh_private_key)
   }
 
