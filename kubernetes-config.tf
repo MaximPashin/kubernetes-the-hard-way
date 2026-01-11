@@ -3,12 +3,15 @@ resource "null_resource" "k8s_configs" {
         local_file.ca_key,
         local_file.ca_cert,
         local_file.cert_certs,
-        null_resource.local_setup,
+        null_resource.local_download_binaries,
     ]
 
     # Provisioner для выполнения команд на jump host
     provisioner "local-exec" {
         command = <<-EOT
+            export ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
+            envsubst < ${path.module}/configs/encryption-config.yaml.template > ${path.module}/configs/encryption-config.yaml
+
             export PATH=${path.module}/downloads/client:${path.module}/downloads/controller:${path.module}/downloads/worker:$PATH
     # nodes kubeconf
             %{ for i in range(var.vm_count) }
@@ -165,6 +168,11 @@ resource "null_resource" "copy_kubeconfig_server" {
     bastion_host        = yandex_compute_instance.jump_node.network_interface[0].nat_ip_address
     bastion_user        = "admin"
     bastion_private_key = file(var.ssh_private_key)
+  }
+
+  provisioner "file" {
+    source = "${path.module}/configs/encryption-config.yaml"
+    destination = "./encryption-config.yaml"
   }
 
   provisioner "file" {

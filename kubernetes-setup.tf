@@ -1,10 +1,4 @@
-resource "null_resource" "local_setup" {
-    depends_on = [
-        yandex_compute_instance.jump_node,
-        yandex_compute_instance.server_node,
-        yandex_compute_instance.worker_nodes,
-    ]
-
+resource "null_resource" "local_download_binaries" {
     # Provisioner для выполнения команд на jump host
     provisioner "local-exec" {
         command = <<-EOT
