@@ -51,9 +51,8 @@ resource "null_resource" "local_download_binaries" {
             tar -xzf cni-plugins-linux-$ARCH-v1.6.2.tgz -C downloads/cni-plugins/
             
             # etcd
-            tar -xzf etcd-v3.6.0-rc.3-linux-$ARCH.tar.gz -C downloads/ \\
-              --strip-components 1 \\
-              etcd-v3.6.0-rc.3-linux-$ARCH/etcdctl \\
+            tar -xzf etcd-v3.6.0-rc.3-linux-$ARCH.tar.gz -C ./ --strip-components 1 \
+              etcd-v3.6.0-rc.3-linux-$ARCH/etcdctl \
               etcd-v3.6.0-rc.3-linux-$ARCH/etcd
             
             # Перемещаем бинарные файлы в соответствующие директории

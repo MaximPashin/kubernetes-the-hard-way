@@ -148,8 +148,8 @@ resource "null_resource" "copy_kubeconfig_nodes" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo cp /tmp/kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig",
-      "sudo cp /tmp/kubelet.kubeconfig /var/lib/kubelet/kubeconfig",
+      "sudo mv /tmp/kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig",
+      "sudo mv /tmp/kubelet.kubeconfig /var/lib/kubelet/kubeconfig",
     ]
   }
 }
