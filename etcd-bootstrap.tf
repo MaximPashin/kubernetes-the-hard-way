@@ -1,6 +1,7 @@
 resource "null_resource" "copy_etcd_files_server" {
   # Зависимость от создания сертификатов
   depends_on = [
+    yandex_compute_instance.server_node,
     null_resource.local_download_binaries,
   ]
 
@@ -27,6 +28,23 @@ resource "null_resource" "copy_etcd_files_server" {
   provisioner "file" {
     source = "${path.module}/units/etcd.service"
     destination = "/tmp/etcd.service"
+  }
+}
+
+resource "null_resource" "bootstrap_etcd" {
+  # Зависимость от создания сертификатов
+  depends_on = [
+    null_resource.copy_etcd_files_server
+  ]
+
+  connection {
+    type        = "ssh"
+    user        = "admin"
+    private_key = file(var.ssh_private_key)
+    host        = yandex_compute_instance.server_node.network_interface[0].ip_address
+    bastion_host        = yandex_compute_instance.jump_node.network_interface[0].nat_ip_address
+    bastion_user        = "admin"
+    bastion_private_key = file(var.ssh_private_key)
   }
 
   provisioner "remote-exec" {
