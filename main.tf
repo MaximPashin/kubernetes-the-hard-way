@@ -194,6 +194,14 @@ resource "yandex_compute_instance" "worker_nodes" {
               sudo: ['ALL=(ALL) NOPASSWD:ALL']
               ssh-authorized-keys:
                 - ${file(var.ssh_public_key)}
+        
+        package_update: true
+        package_upgrade: true
+        packages:
+            - socat
+            - conntrack
+            - ipset
+            - kmod
         EOF
     }
 }

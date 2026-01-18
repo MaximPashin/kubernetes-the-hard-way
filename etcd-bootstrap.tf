@@ -2,6 +2,7 @@ resource "null_resource" "copy_etcd_files_server" {
   # Зависимость от создания сертификатов
   depends_on = [
     yandex_compute_instance.server_node,
+    null_resource.k8s_configs,
     null_resource.local_download_binaries,
   ]
 
