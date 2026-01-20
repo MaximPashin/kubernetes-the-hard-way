@@ -4,7 +4,7 @@ resource "null_resource" "copy_binaries_nodes" {
   # Зависимость от создания сертификатов
   depends_on = [
     yandex_compute_instance.worker_nodes,
-    # null_resource.local_download_binaries,
+    null_resource.local_download_binaries,
   ]
 
   connection {
