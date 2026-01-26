@@ -135,6 +135,7 @@ resource "yandex_compute_instance" "server_node" {
   }
 
   network_interface {
+    nat       = true
     subnet_id = yandex_vpc_subnet.cluster_subnet.id
     security_group_ids = [
       yandex_vpc_security_group.internal_sg.id,
@@ -177,6 +178,7 @@ resource "yandex_compute_instance" "worker_nodes" {
   }
 
   network_interface {
+    nat       = true
     subnet_id = yandex_vpc_subnet.cluster_subnet.id
     security_group_ids = [
       yandex_vpc_security_group.internal_sg.id,

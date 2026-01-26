@@ -164,6 +164,7 @@ resource "null_resource" "server_setup" {
             echo '${local.server_config.ipv4_address} ${local.server_config.fqdn} ${local.server_config.hostname}' | sudo tee -a /etc/cloud/templates/hosts.debian.tmpl
             %{ for i in range(var.vm_count) }
             echo '${local.workers_configs[i].ipv4_address} ${local.workers_configs[i].fqdn} ${local.workers_configs[i].hostname}' | sudo tee -a /etc/cloud/templates/hosts.debian.tmpl
+            sudo ip route add ${local.workers_configs[i].pod_subnet} via ${local.workers_configs[i].ipv4_address}
             %{ endfor ~}
             sudo systemctl restart cloud-init
             echo '=== Конфигурирование hosts завершена ==='
@@ -210,6 +211,9 @@ resource "null_resource" "workers_setup" {
             echo '${local.server_config.ipv4_address} ${local.server_config.fqdn} ${local.server_config.hostname}' | sudo tee -a /etc/cloud/templates/hosts.debian.tmpl
             %{ for i in range(var.vm_count) }
             echo '${local.workers_configs[i].ipv4_address} ${local.workers_configs[i].fqdn} ${local.workers_configs[i].hostname}' | sudo tee -a /etc/cloud/templates/hosts.debian.tmpl
+            if [ '${i}' != '${each.key}' ]; then
+                sudo ip route add ${local.workers_configs[i].pod_subnet} via ${local.workers_configs[i].ipv4_address}
+            fi
             %{ endfor ~}
             sudo systemctl restart cloud-init
             echo '=== Конфигурирование hosts завершена ==='
